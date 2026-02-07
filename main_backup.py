@@ -135,56 +135,41 @@ OXAPAY_NETWORK_MAP = {
 }
 
 async def get_oxapay_invoice(network, order_id, amount):
-    """Generate a white-label payment using Oxapay API"""
+    """Generate an invoice using Oxapay Invoice API"""
     if not config.USE_OXAPAY:
         return None
     
-    # Map network to pay_currency
-    pay_currency_map = {
-        "TRC20": "TRX",
-        "BEP20": "BNB",
-        "ERC20": "ETH"
-    }
-    
-    network_map = {
-        "TRC20": "TRC20",
-        "BEP20": "BSC",
-        "ERC20": "ETH"
-    }
-    
     payload = {
         "merchant_api_key": config.OXAPAY_API_KEY,
-        "amount": str(amount),
+        "amount": str(amount),  # Convert to string
         "currency": "USD",
-        "pay_currency": pay_currency_map.get(network, "TRX"),
-        "network": network_map.get(network, "TRC20"),
-        "lifetime": 60,
+        "lifetime": 30,
         "fee_paid_by_payer": 1,
-        "under_paid_coverage": 20,
+        "under_paid_coverage": 2.5,
         "to_currency": "USDT",
         "auto_withdrawal": False,
+        "mixed_payment": True,
+        "return_url": "https://t.me/iknowkhstore",
         "order_id": order_id,
-        "description": f"Order #{order_id}"
+        "thanks_message": "Thank you for your payment!",
+        "description": f"Order #{order_id}",
+        "sandbox": False
     }
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                "https://api.oxapay.com/v1/payment/white-label",
+                "https://api.oxapay.com/v1/payment/invoice",
                 json=payload,
                 headers={"Content-Type": "application/json"}
             )
             data = response.json()
             
-            logger.info(f"Oxapay response: {data}")
-            
             if data.get("status") == 100:
                 return {
                     "pay_link": data["data"]["payLink"],
-                    "address": data["data"].get("address", ""),
-                    "network": data["data"].get("network", ""),
-                    "tracking_id": data["data"].get("trackingId", ""),
-                    "pay_currency": data["data"].get("payCurrency", "")
+                    "invoice_id": data["data"].get("invoiceId", ""),
+                    "tracking_id": data["data"].get("trackingId", "")
                 }
             else:
                 error_msg = data.get("message", "Unknown error")
@@ -612,33 +597,21 @@ async def handle_text(update, context):
         
         if oxapay_info:
             pay_link = oxapay_info.get("pay_link", "")
-            address = oxapay_info.get("address", "")
-            pay_currency = oxapay_info.get("pay_currency", "")
-            ox_network = oxapay_info.get("network", "")
+            invoice_id = oxapay_info.get("invoice_id", "")
             tracking_id = oxapay_info.get("tracking_id", "")
             state_info["data"]["oxapay_pay_link"] = pay_link
-            state_info["data"]["oxapay_address"] = address
-            state_info["data"]["oxapay_currency"] = pay_currency
-            state_info["data"]["oxapay_network"] = ox_network
+            state_info["data"]["oxapay_invoice_id"] = invoice_id
         else:
             # Fallback to static wallet
             pay_link = ""
-            address = ""
-            pay_currency = ""
-            ox_network = ""
         
         set_state(user_id, "SELL_CONFIRM", state_info["data"])
         
         network_display = {"TRC20": "TRC20", "BEP20": "BEP20", "ERC20": "ERC20"}
         
         # Build payment display
-        if pay_link and address:
-            payment_display = f"""🔗 [Pay Invoice]({pay_link})
-
-💰 *Send {pay_currency} to:*
-`{address}`
-
-🔹 *Network:* {ox_network}"""
+        if pay_link:
+            payment_display = f"🔗 [Pay Invoice]({pay_link})"
         else:
             wallet = config.PLATFORM_USDT_WALLET.get(network, "")
             payment_display = f"`{wallet}`"
@@ -717,33 +690,21 @@ async def handle_photo(update, context):
         
         if oxapay_info:
             pay_link = oxapay_info.get("pay_link", "")
-            address = oxapay_info.get("address", "")
-            pay_currency = oxapay_info.get("pay_currency", "")
-            ox_network = oxapay_info.get("network", "")
+            invoice_id = oxapay_info.get("invoice_id", "")
             tracking_id = oxapay_info.get("tracking_id", "")
             state_info["data"]["oxapay_pay_link"] = pay_link
-            state_info["data"]["oxapay_address"] = address
-            state_info["data"]["oxapay_currency"] = pay_currency
-            state_info["data"]["oxapay_network"] = ox_network
+            state_info["data"]["oxapay_invoice_id"] = invoice_id
         else:
             # Fallback to static wallet
             pay_link = ""
-            address = ""
-            pay_currency = ""
-            ox_network = ""
         
         set_state(user_id, "SELL_CONFIRM", state_info["data"])
         
         network_display = {"TRC20": "TRC20", "BEP20": "BEP20", "ERC20": "ERC20"}
         
         # Build payment display
-        if pay_link and address:
-            payment_display = f"""🔗 [Pay Invoice]({pay_link})
-
-💰 *Send {pay_currency} to:*
-`{address}`
-
-🔹 *Network:* {ox_network}"""
+        if pay_link:
+            payment_display = f"🔗 [Pay Invoice]({pay_link})"
         else:
             wallet = config.PLATFORM_USDT_WALLET.get(network, "")
             payment_display = f"`{wallet}`"
