@@ -32,7 +32,7 @@ MESSAGES = {
         "rules": "📜 *Exchange Rules* 📜\n\n1️⃣ *Payment Methods* - Only ABA/KHQR, Bank Transfer\n2️⃣ *No Off-Platform Deals* - Never transfer outside\n3️⃣ *Confirm First* - Verify before releasing USDT\n4️⃣ *Timely Confirmation* - Upload proof promptly\n5️⃣ *Cancellation* - Frequent cancellations = penalties\n6️⃣ *Third-Party* - No using others' accounts\n7️⃣ *Disputes* - Open through system only\n8️⃣ *Safety* - Suspicious activity = suspension\n9️⃣ *Rates* - May vary by timing\n🔟 *Risk* - P2P involves risk",
         "rates": "📊 *Exchange Rates* 📊\n\n💵 *Base Rate:* 1 USD = {usd_to_khr:,} KHR\n\n💰 *Fees:*\n• Buy: {buy_fee}%\n• Sell: {sell_fee}%\n\n📦 *Min:* {min_amount} USDT\n\n*Note:* Rates may vary.",
         "enter_amount_buy": "💰 *Enter USDT amount to BUY:*\n\nMin: {min_amount} USDT",
-        "enter_amount_sell": "💰 *\n\nMin: {min_amount} USDT",
+        "enter_amount_sell": "💰 *Enter USDT amount to SELL:*\n\nMin: {min_amount} USDT",
         "enter_payment_detail": "🏦 *Enter your payment details* 🏦\n\nPlease enter your ABA account number or KHQR information where you want to receive KHR payment:\n\n💡 Example: ABA 123456789 or KHQR",
         "payment_detail_received": "✅ *Payment Details Received!*\n\n📋 We'll send payment to:\n{payment_detail}\n\nNow please send USDT to the platform wallet.",
         "enter_wallet": "🏦 *Enter your USDT wallet address:*\n\nWhere you receive USDT (TRC20/BEP20/ERC20)",
