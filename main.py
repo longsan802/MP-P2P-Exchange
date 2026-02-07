@@ -656,8 +656,10 @@ async def handle_text(update, context):
 💳 *Your Payment Details:*
 {payment_detail}
 
-💰 *Payment:*
+━━━━━━━━━━━━━━━━
+💰 *📥 DEPOSIT USDT via Oxapay:*
 {payment_display}
+━━━━━━━━━━━━━━━━
 
 ⚠️ *Important:* Send only {network} USDT
 ⏰ *Timeout:* 15 minutes"""
@@ -761,8 +763,10 @@ async def handle_photo(update, context):
 💳 *Your Payment Details:*
 📷 KHQR Image Uploaded
 
-💰 *Payment:*
+━━━━━━━━━━━━━━━━
+💰 *📥 DEPOSIT USDT via Oxapay:*
 {payment_display}
+━━━━━━━━━━━━━━━━
 
 ⚠️ *Important:* Send only {network} USDT
 ⏰ *Timeout:* 15 minutes"""
