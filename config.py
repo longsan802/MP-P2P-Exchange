@@ -23,7 +23,7 @@ PLATFORM_USDT_WALLET = {
 # ================= OXAPAY API =================
 # Oxapay API for generating unique payment addresses
 # Get API key from https://oxapay.com/dashboard
-OXAPAY_API_KEY = "VQEXET-LAEBOV-CGHAIW-UXREXH"
+OXAPAY_API_KEY = ":WHKAUR-EBMBOC-NXGJVS-PPORNW"
 OXAPAY_API_URL = "https://api.oxapay.com/v1/payment/white-label"
 
 # Enable Oxapay for receiving USDT (set False to use static wallets)
