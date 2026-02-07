@@ -33,6 +33,8 @@ MESSAGES = {
         "rates": "📊 *Exchange Rates* 📊\n\n💵 *Base Rate:* 1 USD = {usd_to_khr:,} KHR\n\n💰 *Fees:*\n• Buy: {buy_fee}%\n• Sell: {sell_fee}%\n\n📦 *Min:* {min_amount} USDT\n\n*Note:* Rates may vary.",
         "enter_amount_buy": "💰 *Enter USDT amount to BUY:*\n\nMin: {min_amount} USDT",
         "enter_amount_sell": "💰 *Enter USDT amount to SELL:*\n\nMin: {min_amount} USDT",
+        "enter_payment_detail": "🏦 *Enter your payment details* 🏦\n\nPlease enter your ABA account number or KHQR information where you want to receive KHR payment:\n\n💡 Example: ABA 123456789 or KHQR",
+        "payment_detail_received": "✅ *Payment Details Received!*\n\n📋 We'll send payment to:\n{payment_detail}\n\nNow please send USDT to the platform wallet.",
         "enter_wallet": "🏦 *Enter your USDT wallet address:*\n\nWhere you receive USDT (TRC20/BEP20/ERC20)",
         "upload_invoice": "📷 *Upload Invoice*\n\nSend payment screenshot or invoice photo.\n\n💡 Max: 10MB | 📁 JPG, PNG",
         "invoice_uploaded": "✅ *Invoice Uploaded!*\n\n📋 *Order #{order_id}*\n🔹 Amount: {amount} USDT\n🔹 Status: ⏳ Awaiting Verification\n\n💚 Thank you! Team will verify shortly.",
@@ -420,35 +422,14 @@ async def handle_text(update, context):
                 )
                 add_message_id(user_id, msg.message_id)
             else:
-                network = state_info["data"]["network"]
-                wallet = config.PLATFORM_USDT_WALLET.get(network, "")
-                fee = calculate_fee(amount, config.EXCHANGE_RATE['SELL_FEE_PERCENT'])
-                receive_amount = amount - fee
-                state_info["data"]["fee"] = fee
-                
-                set_state(user_id, "SELL_CONFIRM", state_info["data"])
-                
-                network_display = {"TRC20": "TRC20", "BEP20": "BEP20", "ERC20": "ERC20"}
-                
-                confirm_text = f"""📋 *Order #{state_info['data']['order_id']}* 📋
-
-🔹 Type: Sell USDT
-🔹 Network: {network_display.get(network, network)}
-🔹 Amount: {amount} USDT
-🔹 Fee: {fee} USDT
-🔹 You Receive: {receive_amount} USDT
-
-💳 *Send USDT to:*
-`{wallet}`
-
-⚠️ *Important:* Send only {network} USDT
-⏰ *Timeout:* 15 minutes"""
-                
-                await update.message.reply_text(
-                    confirm_text,
-                    reply_markup=get_confirm_keyboard(lang),
+                # SELL - first ask for payment details
+                state_info["data"]["fee"] = calculate_fee(amount, config.EXCHANGE_RATE['SELL_FEE_PERCENT'])
+                set_state(user_id, "SELL_PAYMENT_DETAILS", state_info["data"])
+                msg = await update.message.reply_text(
+                    get_message("enter_payment_detail", lang),
                     parse_mode="Markdown"
                 )
+                add_message_id(user_id, msg.message_id)
             return
         
         except ValueError:
@@ -530,6 +511,55 @@ async def handle_text(update, context):
         
         return
     
+    # Handle SELL_PAYMENT_DETAILS state
+    if current_state == "SELL_PAYMENT_DETAILS":
+        payment_detail = text.strip()
+        
+        if len(payment_detail) < 5:
+            msg = await update.message.reply_text("❌ Please enter valid payment details")
+            add_message_id(user_id, msg.message_id)
+            return
+        
+        state_info["data"]["payment_detail"] = payment_detail
+        
+        network = state_info["data"]["network"]
+        amount = state_info["data"]["amount"]
+        order_id = state_info["data"]["order_id"]
+        fee = state_info["data"]["fee"]
+        receive_khr = (amount - fee) * config.EXCHANGE_RATE["USD_TO_KHR"]
+        
+        wallet = config.PLATFORM_USDT_WALLET.get(network, "")
+        
+        await delete_old_messages(context, user_id, update.message.chat_id)
+        
+        set_state(user_id, "SELL_CONFIRM", state_info["data"])
+        
+        network_display = {"TRC20": "TRC20", "BEP20": "BEP20", "ERC20": "ERC20"}
+        
+        confirm_text = f"""📋 *Order #{order_id}* 📋
+
+🔹 Type: Sell USDT
+🔹 Network: {network_display.get(network, network)}
+🔹 Amount: {amount} USDT
+🔹 Fee: {fee} USDT
+🔹 You Receive: {receive_khr:,} KHR
+
+💳 *Your Payment Details:*
+{payment_detail}
+
+💰 *Send USDT to:*
+`{wallet}`
+
+⚠️ *Important:* Send only {network} USDT
+⏰ *Timeout:* 15 minutes"""
+        
+        await update.message.reply_text(
+            confirm_text,
+            reply_markup=get_confirm_keyboard(lang),
+            parse_mode="Markdown"
+        )
+        return
+    
     msg = await update.message.reply_text(
         get_message("unknown_command", lang),
         reply_markup=get_main_keyboard(lang),
@@ -586,6 +616,13 @@ async def handle_photo(update, context):
     network = state_info['data'].get('network', 'N/A')
     order_type = state_info['data'].get('type', 'BUY')
     fee = state_info['data'].get('fee', 0)
+    payment_detail = state_info['data'].get('payment_detail', 'N/A')
+    
+    # Add payment details for SELL orders
+    payment_section = "" if order_type == "BUY" else f"""💰 *User Payment Details (to receive KHR):*
+{payment_detail}
+
+"""
     
     admin_text = f"""🆕 *New Payment Received* 🆕
 
@@ -597,7 +634,7 @@ async def handle_photo(update, context):
 🔹 Amount: {state_info['data'].get('amount', 0)} USDT
 🔹 Fee: {fee} USDT
 
-🏦 *User Wallet Address:*
+{payment_section}🏦 *User Wallet Address:*
 `{wallet_address}`
 
 💳 *Status:* ✅ Invoice Uploaded
