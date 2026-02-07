@@ -26,6 +26,11 @@ PLATFORM_USDT_WALLET = {
 OXAPAY_API_KEY = ":WHKAUR-EBMBOC-NXGJVS-PPORNW"
 OXAPAY_API_URL = "https://api.oxapay.com/v1/payment/white-label"
 
+# Callback URL for payment verification (webhook)
+# Set this to your server URL where Oxapay will send payment notifications
+# Example: "https://your-domain.com/oxapay-webhook"
+OXAPAY_CALLBACK_URL = ""
+
 # Enable Oxapay for receiving USDT (set False to use static wallets)
 USE_OXAPAY = True
 

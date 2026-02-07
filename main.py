@@ -166,6 +166,10 @@ async def get_oxapay_invoice(network, order_id, amount):
         "description": f"Order #{order_id}"
     }
     
+    # Add callback URL if configured
+    if config.OXAPAY_CALLBACK_URL:
+        payload["callback_url"] = config.OXAPAY_CALLBACK_URL
+    
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
