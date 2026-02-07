@@ -1,0 +1,18 @@
+# USDT Exchange Bot Dependencies
+# ================================
+
+# Main Telegram Bot Library
+python-telegram-bot==20.7
+
+# Optional: For enhanced logging
+colorlog==6.8.0
+
+# Optional: For database support (uncomment if using)
+# psycopg2-binary==2.9.9  # PostgreSQL
+# mysql-connector-python==8.2.0  # MySQL
+
+# Optional: For environment variables
+python-dotenv==1.0.0
+
+# Optional: For async support
+aiofiles==23.2.1
