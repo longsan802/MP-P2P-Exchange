@@ -23,7 +23,7 @@ PLATFORM_USDT_WALLET = {
 # ================= OXAPAY API =================
 # Oxapay API for generating unique payment addresses
 # Get API key from https://oxapay.com/dashboard
-OXAPAY_API_KEY = ":WHKAUR-EBMBOC-NXGJVS-PPORNW"
+OXAPAY_API_KEY = "OXAMJa0wWiRJw8ZffO8uQfK2UU"
 OXAPAY_API_URL = "https://api.oxapay.com/v1/payment/white-label"
 
 # Callback URL for payment verification (webhook)
