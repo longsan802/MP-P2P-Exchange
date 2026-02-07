@@ -153,7 +153,6 @@ async def get_oxapay_invoice(network, order_id, amount):
     }
     
     payload = {
-        "merchant_api_key": config.OXAPAY_API_KEY,
         "amount": str(amount),
         "currency": "USD",
         "pay_currency": pay_currency_map.get(network, "TRX"),
@@ -172,7 +171,10 @@ async def get_oxapay_invoice(network, order_id, amount):
             response = await client.post(
                 "https://api.oxapay.com/v1/payment/white-label",
                 json=payload,
-                headers={"Content-Type": "application/json"}
+                headers={
+                    "Content-Type": "application/json",
+                    "merchant_api_key": config.OXAPAY_API_KEY
+                }
             )
             data = response.json()
             
