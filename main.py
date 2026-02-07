@@ -32,7 +32,7 @@ MESSAGES = {
         "rules": "📜 *Exchange Rules* 📜\n\n1️⃣ *Payment Methods* - Only ABA/KHQR, Bank Transfer\n2️⃣ *No Off-Platform Deals* - Never transfer outside\n3️⃣ *Confirm First* - Verify before releasing USDT\n4️⃣ *Timely Confirmation* - Upload proof promptly\n5️⃣ *Cancellation* - Frequent cancellations = penalties\n6️⃣ *Third-Party* - No using others' accounts\n7️⃣ *Disputes* - Open through system only\n8️⃣ *Safety* - Suspicious activity = suspension\n9️⃣ *Rates* - May vary by timing\n🔟 *Risk* - P2P involves risk",
         "rates": "📊 *Exchange Rates* 📊\n\n💵 *Base Rate:* 1 USD = {usd_to_khr:,} KHR\n\n💰 *Fees:*\n• Buy: {buy_fee}%\n• Sell: {sell_fee}%\n\n📦 *Min:* {min_amount} USDT\n\n*Note:* Rates may vary.",
         "enter_amount_buy": "💰 *Enter USDT amount to BUY:*\n\nMin: {min_amount} USDT",
-        "enter_amount_sell": "💰 *Enter USDT amount to SELL:*\n\nMin: {min_amount} USDT",
+        "enter_amount_sell": "💰 *\n\nMin: {min_amount} USDT",
         "enter_payment_detail": "🏦 *Enter your payment details* 🏦\n\nPlease enter your ABA account number or KHQR information where you want to receive KHR payment:\n\n💡 Example: ABA 123456789 or KHQR",
         "payment_detail_received": "✅ *Payment Details Received!*\n\n📋 We'll send payment to:\n{payment_detail}\n\nNow please send USDT to the platform wallet.",
         "enter_wallet": "🏦 *Enter your USDT wallet address:*\n\nWhere you receive USDT (TRC20/BEP20/ERC20)",
@@ -580,6 +580,60 @@ async def handle_photo(update, context):
     lang = state_info["data"].get("language", "en")
     
     logger.info(f"User {user_id} sent photo (state: {current_state})")
+    
+    # Handle KHQR photo upload during SELL_PAYMENT_DETAILS
+    if current_state == "SELL_PAYMENT_DETAILS":
+        photo = update.message.photo[-1]
+        photo_file = await context.bot.get_file(photo.file_id)
+        
+        os.makedirs("invoices", exist_ok=True)
+        
+        timestamp = int(time.time())
+        order_id = state_info["data"].get("order_id", "UNKNOWN")
+        photo_path = f"invoices/khqr_{order_id}_{timestamp}.jpg"
+        
+        await photo_file.download_to_drive(photo_path)
+        
+        # Store KHQR info
+        state_info["data"]["khqr_image"] = photo_path
+        state_info["data"]["payment_detail"] = "KHQR Image Uploaded"
+        
+        network = state_info["data"]["network"]
+        amount = state_info["data"]["amount"]
+        fee = state_info["data"]["fee"]
+        receive_khr = (amount - fee) * config.EXCHANGE_RATE["USD_TO_KHR"]
+        
+        wallet = config.PLATFORM_USDT_WALLET.get(network, "")
+        
+        await delete_old_messages(context, user_id, update.message.chat_id)
+        
+        set_state(user_id, "SELL_CONFIRM", state_info["data"])
+        
+        network_display = {"TRC20": "TRC20", "BEP20": "BEP20", "ERC20": "ERC20"}
+        
+        confirm_text = f"""📋 *Order #{order_id}* 📋
+
+🔹 Type: Sell USDT
+🔹 Network: {network_display.get(network, network)}
+🔹 Amount: {amount} USDT
+🔹 Fee: {fee} USDT
+🔹 You Receive: {receive_khr:,} KHR
+
+💳 *Your Payment Details:*
+📷 KHQR Image Uploaded
+
+💰 *Send USDT to:*
+`{wallet}`
+
+⚠️ *Important:* Send only {network} USDT
+⏰ *Timeout:* 15 minutes"""
+        
+        await update.message.reply_text(
+            confirm_text,
+            reply_markup=get_confirm_keyboard(lang),
+            parse_mode="Markdown"
+        )
+        return
     
     if current_state != "INVOICE_UPLOAD":
         await update.message.reply_text(get_message("upload_invoice", lang), parse_mode="Markdown")
