@@ -13,12 +13,21 @@ BOT_TOKEN = "8368520052:AAHpEb3gdIz8kLdlMIvlb9xIeezT3gdPpZU"
 ADMIN_ID = 7581084477
 
 # ================= PLATFORM USDT WALLETS =================
-# Platform wallets for receiving USDT
+# Platform wallets for receiving USDT (static fallback)
 PLATFORM_USDT_WALLET = {
     "TRC20": "TPtKtKZH8oQiYkbwqgYxmeEBn5ZTTSKW8A",
     "BEP20": "0x3ceE1c1e10E775Ef36C007D2912B512CDAF61721",
     "ERC20": "0x3ceE1c1e10E775Ef36C007D2912B512CDAF61721"
 }
+
+# ================= OXAPAY API =================
+# Oxapay API for generating unique payment addresses
+# Get API key from https://oxapay.com/dashboard
+OXAPAY_API_KEY = "FXXVPH-0WN3HO-VLU3L3-NNNLKP"
+OXAPAY_API_URL = "https://api.oxapay.com/v1/payment/static-address"
+
+# Enable Oxapay for receiving USDT (set False to use static wallets)
+USE_OXAPAY = True
 
 # ================= KHQR PAYMENT =================
 # KHQR code image - using local file
