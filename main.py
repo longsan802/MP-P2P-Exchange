@@ -79,6 +79,8 @@ MESSAGES = {
         "rates": "📊 *实时 USDT 汇率* 📊\n\n💵 *基准汇率:* 1 USDT = {usd_to_khr:,} KHR\n\n💰 *交易手续费:*\n• 购买 USDT: {buy_fee}%\n• 出售 USDT: {sell_fee}%\n\n📦 *最低交易金额:* {min_amount} USDT\n\n💡 *温馨提示:* 汇率会根据市场波动实时更新，请以最终确认为准",
         "enter_amount_buy": "💰 *输入购买 USDT 金额* 💰\n\n📦 最低购买金额: {min_amount} USDT\n📈 最高购买金额: 10,000 USDT\n\n💵 *请输入您要购买的 USDT 数量:*",
         "enter_amount_sell": "💰 *输入出售 USDT 金额* 💰\n\n📦 最低出售金额: {min_amount} USDT\n📈 最高出售金额: 10,000 USDT\n\n💵 *请输入您要出售的 USDT 数量:*",
+        "enter_payment_detail": "🏦 *输入收款信息* 🏦\n\n📷 上传 KHQR 二维码图片，或\n💳 输入 ABA 银行账户信息\n\n💡 我们将向此账户发送 KHR 付款:",
+        "payment_detail_received": "✅ *收款信息已收到!* ✅\n\n📋 我们将向以下账户发送付款:\n{payment_detail}\n\n💰 请向平台钱包发送 USDT",
         "enter_wallet": "🏦 *输入收款钱包地址* 🏦\n\n📋 请输入您要接收 USDT 的钱包地址:\n\n💡 支持的网络: TRC20 / BEP20 / ERC20\n\n🔗 *请粘贴钱包地址:*",
         "upload_invoice": "📷 *上传付款凭证* 📷\n\n💡 请上传您的付款截图或银行转账凭证\n\n📁 *支持格式:* JPG, PNG, WEBP\n📦 *文件大小:* 最大 10MB\n\n📸 *点击下方按钮上传:*",
         "invoice_uploaded": "✅ *付款凭证已上传!* ✅\n\n📋 *订单编号:* #{order_id}\n💵 *交易金额:* {amount} USDT\n📊 *当前状态:* ⏳ 等待客服审核\n\n💚 *感谢您的信任！*\n客服将尽快核实并处理您的订单。",
