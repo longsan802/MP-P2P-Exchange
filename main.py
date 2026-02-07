@@ -129,21 +129,27 @@ def get_khqr_link(amount): return f"https://acledabank.com.kh/acleda?data={confi
 
 # ================= OXAPAY API =================
 OXAPAY_NETWORK_MAP = {
-    "TRC20": "TRON",
-    "BEP20": "BSC",
+    "TRC20": "TRC20",
+    "BEP20": "BSC", 
     "ERC20": "ETH"
 }
 
-async def get_oxapay_address(network, order_id, amount=0):
-    """Generate a static payment address using Oxapay API"""
+async def get_oxapay_payment(network, order_id, amount):
+    """Generate a payment link using Oxapay White Label API"""
     if not config.USE_OXAPAY:
         return None
     
-    oxapay_network = OXAPAY_NETWORK_MAP.get(network, "TRON")
+    oxapay_network = OXAPAY_NETWORK_MAP.get(network, "TRC20")
     
     payload = {
         "merchant_api_key": config.OXAPAY_API_KEY,
+        "amount": str(amount),  # Convert to string
+        "currency": "USD",
+        "pay_currency": "TRX",
         "network": oxapay_network,
+        "lifetime": 60,
+        "fee_paid_by_payer": 1,
+        "under_paid_coverage": 20,
         "to_currency": "USDT",
         "auto_withdrawal": False,
         "order_id": order_id,
@@ -153,7 +159,7 @@ async def get_oxapay_address(network, order_id, amount=0):
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                config.OXAPAY_API_URL,
+                "https://api.oxapay.com/v1/payment/white-label",
                 json=payload,
                 headers={"Content-Type": "application/json"}
             )
@@ -161,9 +167,10 @@ async def get_oxapay_address(network, order_id, amount=0):
             
             if data.get("status") == 100:
                 return {
-                    "address": data["data"]["address"],
-                    "tag": data["data"].get("tag", ""),
-                    "uri": data["data"].get("payURI", "")
+                    "pay_link": data["data"]["payLink"],
+                    "address": data["data"].get("address", ""),
+                    "amount": data["data"].get("payAmount", 0),
+                    "currency": data["data"].get("payCurrency", "")
                 }
             else:
                 error_msg = data.get("message", "Unknown error")
@@ -578,31 +585,32 @@ async def handle_text(update, context):
         
         await delete_old_messages(context, user_id, update.message.chat_id)
         
-        # Try to get Oxapay address
-        oxapay_info = await get_oxapay_address(network, order_id)
+        # Try to get Oxapay payment
+        oxapay_info = await get_oxapay_payment(network, order_id, amount)
         
         if oxapay_info:
-            wallet = oxapay_info["address"]
-            wallet_tag = oxapay_info.get("tag", "")
-            pay_uri = oxapay_info.get("uri", "")
-            state_info["data"]["oxapay_address"] = wallet
-            state_info["data"]["oxapay_tag"] = wallet_tag
+            pay_link = oxapay_info.get("pay_link", "")
+            pay_address = oxapay_info.get("address", "")
+            pay_amount = oxapay_info.get("amount", 0)
+            pay_currency = oxapay_info.get("currency", "")
+            state_info["data"]["oxapay_address"] = pay_address
+            state_info["data"]["oxapay_pay_link"] = pay_link
         else:
             # Fallback to static wallet
-            wallet = config.PLATFORM_USDT_WALLET.get(network, "")
-            wallet_tag = ""
-            pay_uri = ""
+            pay_link = ""
+            pay_address = config.PLATFORM_USDT_WALLET.get(network, "")
+            pay_amount = 0
+            pay_currency = ""
         
         set_state(user_id, "SELL_CONFIRM", state_info["data"])
         
         network_display = {"TRC20": "TRC20", "BEP20": "BEP20", "ERC20": "ERC20"}
         
-        # Build wallet display
-        wallet_display = f"`{wallet}`"
-        if wallet_tag:
-            wallet_display += f"\n🏷️ Memo: `{wallet_tag}`"
-        if pay_uri:
-            wallet_display += f"\n🔗 [Pay Link]({pay_uri})"
+        # Build payment display
+        if pay_link:
+            payment_display = f"🔗 [Pay Here]({pay_link})\n📍 Address: `{pay_address}`\n💰 Amount: {pay_amount} {pay_currency}"
+        else:
+            payment_display = f"`{pay_address}`"
         
         confirm_text = f"""📋 *Order #{order_id}* 📋
 
@@ -615,8 +623,8 @@ async def handle_text(update, context):
 💳 *Your Payment Details:*
 {payment_detail}
 
-💰 *Send USDT to:*
-{wallet_display}
+💰 *Payment:*
+{payment_display}
 
 ⚠️ *Important:* Send only {network} USDT
 ⏰ *Timeout:* 15 minutes"""
@@ -673,31 +681,32 @@ async def handle_photo(update, context):
         
         await delete_old_messages(context, user_id, update.message.chat_id)
         
-        # Try to get Oxapay address
-        oxapay_info = await get_oxapay_address(network, order_id)
+        # Try to get Oxapay payment
+        oxapay_info = await get_oxapay_payment(network, order_id, amount)
         
         if oxapay_info:
-            wallet = oxapay_info["address"]
-            wallet_tag = oxapay_info.get("tag", "")
-            pay_uri = oxapay_info.get("uri", "")
-            state_info["data"]["oxapay_address"] = wallet
-            state_info["data"]["oxapay_tag"] = wallet_tag
+            pay_link = oxapay_info.get("pay_link", "")
+            pay_address = oxapay_info.get("address", "")
+            pay_amount = oxapay_info.get("amount", 0)
+            pay_currency = oxapay_info.get("currency", "")
+            state_info["data"]["oxapay_address"] = pay_address
+            state_info["data"]["oxapay_pay_link"] = pay_link
         else:
             # Fallback to static wallet
-            wallet = config.PLATFORM_USDT_WALLET.get(network, "")
-            wallet_tag = ""
-            pay_uri = ""
+            pay_link = ""
+            pay_address = config.PLATFORM_USDT_WALLET.get(network, "")
+            pay_amount = 0
+            pay_currency = ""
         
         set_state(user_id, "SELL_CONFIRM", state_info["data"])
         
         network_display = {"TRC20": "TRC20", "BEP20": "BEP20", "ERC20": "ERC20"}
         
-        # Build wallet display
-        wallet_display = f"`{wallet}`"
-        if wallet_tag:
-            wallet_display += f"\n🏷️ Memo: `{wallet_tag}`"
-        if pay_uri:
-            wallet_display += f"\n🔗 [Pay Link]({pay_uri})"
+        # Build payment display
+        if pay_link:
+            payment_display = f"🔗 [Pay Here]({pay_link})\n📍 Address: `{pay_address}`\n💰 Amount: {pay_amount} {pay_currency}"
+        else:
+            payment_display = f"`{pay_address}`"
         
         confirm_text = f"""📋 *Order #{order_id}* 📋
 
@@ -710,8 +719,8 @@ async def handle_photo(update, context):
 💳 *Your Payment Details:*
 📷 KHQR Image Uploaded
 
-💰 *Send USDT to:*
-{wallet_display}
+💰 *Payment:*
+{payment_display}
 
 ⚠️ *Important:* Send only {network} USDT
 ⏰ *Timeout:* 15 minutes"""
