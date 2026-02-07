@@ -217,12 +217,20 @@ def get_network_keyboard():
         [InlineKeyboardButton("🔙 Back", callback_data="back_main")]
     ])
 
-def get_confirm_keyboard(lang="en"):
-    labels = {
-        "en": ["✅ Payment Done", "🔙 Cancel"],
-        "km": ["✅ បានទូ", "🔙 បោះ"],
-        "zh": ["✅ 付款完成", "🔙 取消"]
-    }
+def get_confirm_keyboard(lang="en", order_type="BUY", use_oxapay=False):
+    # For SELL orders with Oxapay, show "Pay Now" instead of "Payment Done"
+    if order_type == "SELL" and use_oxapay:
+        labels = {
+            "en": ["✅ Pay Now", "🔙 Cancel"],
+            "km": ["✅ បើកទូទាត់", "🔙 បោះ"],
+            "zh": ["✅ 立即支付", "🔙 取消"]
+        }
+    else:
+        labels = {
+            "en": ["✅ Payment Done", "🔙 Cancel"],
+            "km": ["✅ បានទូ", "🔙 បោះ"],
+            "zh": ["✅ 付款完成", "🔙 取消"]
+        }
     l = labels.get(lang, labels["en"])
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(l[0], callback_data="confirm_payment")],
@@ -544,21 +552,21 @@ async def handle_text(update, context):
                     msg = await update.message.reply_photo(
                         photo=photo,
                         caption=payment_text,
-                        reply_markup=get_confirm_keyboard(lang),
+                        reply_markup=get_confirm_keyboard(lang, order_type="BUY"),
                         parse_mode="Markdown"
                     )
                     add_message_id(user_id, msg.message_id)
             except Exception:
                 msg = await update.message.reply_text(
                     payment_text,
-                    reply_markup=get_confirm_keyboard(lang),
+                    reply_markup=get_confirm_keyboard(lang, order_type="BUY"),
                     parse_mode="Markdown"
                 )
                 add_message_id(user_id, msg.message_id)
         else:
             msg = await update.message.reply_text(
                 payment_text,
-                reply_markup=get_confirm_keyboard(lang),
+                reply_markup=get_confirm_keyboard(lang, order_type="BUY"),
                 parse_mode="Markdown"
             )
             add_message_id(user_id, msg.message_id)
@@ -627,7 +635,7 @@ async def handle_text(update, context):
         
         await update.message.reply_text(
             confirm_text,
-            reply_markup=get_confirm_keyboard(lang),
+            reply_markup=get_confirm_keyboard(lang, order_type="SELL", use_oxapay=bool(pay_link)),
             parse_mode="Markdown"
         )
         return
@@ -720,7 +728,7 @@ async def handle_photo(update, context):
         
         await update.message.reply_text(
             confirm_text,
-            reply_markup=get_confirm_keyboard(lang),
+            reply_markup=get_confirm_keyboard(lang, order_type="SELL", use_oxapay=bool(pay_link)),
             parse_mode="Markdown"
         )
         return
